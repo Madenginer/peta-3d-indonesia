@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Peta Timbul 3D Indonesia — 5 Pulau Besar & Kenampakan Alam</title>
+  <style>
+    :root {
+      --bg-dark: rgba(15, 23, 42, 0.88);
+      --border-light: rgba(255, 255, 255, 0.18);
+      --accent: #38bdf8;
+      --gold: #fbbf24;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; user-select: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #071324; color: #f8fafc; }
+    #canvas-container { width: 100%; height: 100%; position: absolute; inset: 0; z-index: 1; }
+
+    /* Top Header Overlay */
+    .top-bar {
+      position: absolute; top: 12px; left: 12px; right: 12px; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      background: var(--bg-dark); backdrop-filter: blur(12px);
+      border: 1px solid var(--border-light); border-radius: 16px;
+      padding: 10px 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .flag-icon {
+      width: 38px; height: 26px; border-radius: 4px; overflow: hidden;
+      border: 1.5px solid #fff; flex-shrink: 0;
+      background: linear-gradient(to bottom, #ef4444 50%, #ffffff 50%);
+    }
+    .brand h1 { font-size: 16px; font-weight: 800; color: #fff; letter-spacing: 0.3px; }
+    .brand p { font-size: 11.5px; color: #94a3b8; }
+
+    .mode-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tab-btn {
+      background: rgba(255,255,255,0.08); color: #e2e8f0;
+      border: 1px solid var(--border-light); border-radius: 10px;
+      padding: 7px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+    }
+    .tab-btn:hover { background: rgba(56, 189, 248, 0.2); border-color: var(--accent); }
+    .tab-btn.active { background: #0284c7; color: #fff; border-color: #7dd3fc; box-shadow: 0 0 14px rgba(2,132,199,0.55); }
+
+    /* Left Legend & Quick Island Selector */
+    .side-panel {
+      position: absolute; top: 82px; left: 12px; z-index: 10;
+      width: 270px; background: var(--bg-dark); backdrop-filter: blur(12px);
+      border: 1px solid var(--border-light); border-radius: 16px;
+      padding: 12px 14px; box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+      max-height: calc(100vh - 185px); overflow-y: auto;
+    }
+    .panel-title { font-size: 11.5px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+    .island-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .island-btn {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 9px; padding: 7px 10px; color: #fff; font-size: 12.5px; font-weight: 700;
+      cursor: pointer; transition: 0.18s; text-align: left;
+    }
+    .island-btn:hover, .island-btn.active { background: rgba(255,255,255,0.16); border-color: #fff; transform: translateX(3px); }
+    .swatch { width: 14px; height: 14px; border-radius: 4px; display: inline-block; margin-right: 8px; border: 1px solid #fff; }
+    .nature-legend { display: flex; flex-direction: column; gap: 5px; font-size: 11.5px; color: #cbd5e1; border-top: 1px solid var(--border-light); padding-top: 9px; }
+    .nature-item { display: flex; align-items: center; gap: 8px; }
+
+    /* Bottom Info Card */
+    .info-card {
+      position: absolute; bottom: 12px; left: 12px; right: 12px; z-index: 10;
+      background: var(--bg-dark); backdrop-filter: blur(14px);
+      border: 1.5px solid var(--accent); border-radius: 16px;
+      padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; gap: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .info-content { flex: 1; }
+    .info-badge {
+      display: inline-block; padding: 2px 9px; border-radius: 6px;
+      font-size: 10.5px; font-weight: 800; background: #0284c7; color: #fff; margin-bottom: 4px;
+    }
+    .info-title { font-size: 16px; font-weight: 800; color: var(--gold); margin-bottom: 3px; }
+    .info-desc { font-size: 12.5px; color: #e2e8f0; line-height: 1.45; }
+    .action-btns { display: flex; gap: 8px; flex-shrink: 0; }
+    .act-btn {
+      background: #16a34a; color: #fff; border: 1px solid #86efac;
+      padding: 8px 13px; border-radius: 10px; font-size: 12px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 5px;
+    }
+    .act-btn.secondary { background: #334155; border-color: #94a3b8; }
+
+    /* Floating 3D HTML Labels */
+    #labels-container { position: absolute; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
+    .label-3d {
+      position: absolute; transform: translate(-50%, -100%);
+      pointer-events: auto; cursor: pointer;
+      background: rgba(15, 23, 42, 0.9); color: #fff;
+      border: 1.5px solid #fff; border-radius: 8px;
+      padding: 4px 9px; font-size: 11.5px; font-weight: 800;
+      white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.45);
+      transition: transform 0.15s;
+    }
+    .label-3d:hover { transform: translate(-50%, -108%) scale(1.08); z-index: 20; }
+    .label-3d .sub { display: block; font-size: 9.5px; font-weight: 600; color: #bae6fd; }
+    .label-geo {
+      background: rgba(3, 105, 161, 0.82); border-color: #7dd3fc;
+      font-size: 11px; letter-spacing: 0.5px;
+    }
+    .label-nature {
+      background: rgba(21, 128, 61, 0.92); border-color: #86efac;
+      font-size: 10.5px;
+    }
+
+    @media (max-width: 768px) {
+      .side-panel { width: 175px; padding: 8px 10px; top: 110px; }
+      .island-btn { font-size: 11px; padding: 5px 8px; }
+      .nature-legend { font-size: 10px; }
+      .info-card { flex-direction: column; align-items: flex-start; padding: 10px 14px; }
+      .action-btns { width: 100%; justify-content: space-between; }
+      .brand h1 { font-size: 14px; }
+    }
+  </style>
+  <!-- Load Three.js, OrbitControls, and GLTFExporter from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation & Learning Topics (A, B, C) -->
+  <div class="top-bar">
+    <div class="brand">
+      <div class="flag-icon"></div>
+      <div>
+        <h1>PETA TIMBUL 3D NEGARA KEPULAUAN INDONESIA</h1>
+        <p>Media Pembelajaran Interaktif 3D — Putar 360°, Zoom, &amp; Klik Pulau</p>
+      </div>
+    </div>
+    <div class="mode-tabs">
+      <button class="tab-btn active" onclick="setTopicMode('all', this)">🌟 Semua Materi</button>
+      <button class="tab-btn" onclick="setTopicMode('A', this)">🌏 A. Negara Kepulauan</button>
+      <button class="tab-btn" onclick="setTopicMode('B', this)">🏝️ B. 5 Pulau Besar</button>
+      <button class="tab-btn" onclick="setTopicMode('C', this)">⛰️ C. Kenampakan Alam</button>
+    </div>
+  </div>
+
+  <!-- Left Panel: 5 Big Islands & Relief Legend -->
+  <div class="side-panel">
+    <div class="panel-title">🏝️ B. Lima Pulau Besar (Klik):</div>
+    <div class="island-list">
+      <button class="island-btn" onclick="focusIsland('sumatra')">
+        <span><span class="swatch" style="background:#ef4444;"></span>1. Pulau Sumatra</span>
+        <span>🔍</span>
+      </button>
+      <button class="island-btn" onclick="focusIsland('jawa')">
+        <span><span class="swatch" style="background:#f59e0b;"></span>2. Pulau Jawa</span>
+        <span>🔍</span>
+      </button>
+      <button class="island-btn" onclick="focusIsland('kalimantan')">
+        <span><span class="swatch" style="background:#10b981;"></span>3. Pulau Kalimantan</span>
+        <span>🔍</span>
+      </button>
+      <button class="island-btn" onclick="focusIsland('sulawesi')">
+        <span><span class="swatch" style="background:#a855f7;"></span>4. Pulau Sulawesi</span>
+        <span>🔍</span>
+      </button>
+      <button class="island-btn" onclick="focusIsland('papua')">
+        <span><span class="swatch" style="background:#06b6d4;"></span>5. Pulau Papua</span>
+        <span>🔍</span>
+      </button>
+    </div>
+
+    <div class="panel-title">⛰️ C. Relief Kenampakan Alam:</div>
+    <div class="nature-legend">
+      <div class="nature-item">🔺 <b>Gunung &amp; Pegunungan:</b> Kerucut 3D tinggi (Cokelat/Oranye/Salju)</div>
+      <div class="nature-item">🌿 <b>Dataran Rendah:</b> Permukaan daratan landai di tepi pulau</div>
+      <div class="nature-item">💧 <b>Sungai Besar:</b> Alur air biru mengalir di daratan pulau</div>
+      <div class="nature-item">🌊 <b>Laut &amp; Samudra:</b> Perairan biru yang mengelilingi kepulauan</div>
+    </div>
+  </div>
+
+  <!-- 3D Floating Labels Container -->
+  <div id="labels-container"></div>
+
+  <!-- Bottom Interactive Explanation & Audio Panel -->
+  <div class="info-card">
+    <div class="info-content">
+      <span id="info-badge" class="info-badge">MATERI A, B &amp; C TERPADU</span>
+      <div id="info-title" class="info-title">Selamat Datang di Peta Timbul 3D Indonesia!</div>
+      <div id="info-desc" class="info-desc">
+        Indonesia adalah negara kepulauan di Asia Tenggara yang terletak di antara <b>Benua Asia</b> dan <b>Benua Australia</b> serta <b>Samudra Hindia</b> dan <b>Samudra Pasifik</b>. Sentuh/klik salah satu dari <b>5 Pulau Besar</b> atau tombol materi di atas untuk melihat bentuk timbul <b>Gunung, Pegunungan, Dataran Rendah, Sungai, dan Laut</b>!
+      </div>
+    </div>
+    <div class="action-btns">
+      <button class="act-btn" onclick="speakCurrentInfo()">🔊 Dengarkan Suara</button>
+      <button class="act-btn secondary" onclick="resetCamera()">🔄 Reset Kamera</button>
+      <button class="act-btn secondary" onclick="exportGLB()">📦 Unduh .GLB</button>
+    </div>
+  </div>
+
+  <!-- 3D WebGL Canvas -->
+  <div id="canvas-container"></div>
+
+  <script>
+    // =========================================================================
+    // DATA MATERI EDUKASI (A, B, C & DETAIL 5 PULAU BESAR)
+    // =========================================================================
+    const TOPIC_DATA = {
+      all: {
+        badge: "MATERI A, B & C TERPADU",
+        title: "Peta Timbul 3D Negara Kepulauan Indonesia",
+        desc: "Indonesia terdiri atas lebih dari 17.000 pulau dari Sabang sampai Merauke. Lima pulau besar dibuat dengan warna berbeda (Sumatra, Jawa, Kalimantan, Sulawesi, Papua) lengkap dengan bentuk timbul gunung, pegunungan, dataran rendah, sungai, dan laut.",
+        camPos: [0, 34, 42], target: [0, 0, 0]
+      },
+      A: {
+        badge: "MATERI A — MENGENAL NEGARA INDONESIA",
+        title: "Letak Geografis Negara Kepulauan Indonesia",
+        desc: "Indonesia adalah negara kepulauan di Asia Tenggara yang membentang di antara dua benua (Benua Asia di utara dan Benua Australia di selatan) serta dua samudra besar (Samudra Hindia di selatan/barat dan Samudra Pasifik di timur).",
+        camPos: [0, 44, 48], target: [0, 0, 0]
+      },
+      B: {
+        badge: "MATERI B — LIMA PULAU BESAR INDONESIA",
+        title: "Lima Pulau Besar dengan Warna Berbeda",
+        desc: "Lima pulau besar di Indonesia adalah: (1) Sumatra [Merah-Oranye], (2) Jawa [Kuning Emas], (3) Kalimantan [Hijau Zamrud], (4) Sulawesi [Ungu], dan (5) Papua [Biru Toska]. Klik nama pulau untuk melihat detailnya!",
+        camPos: [0, 30, 36], target: [0, 0, 0]
+      },
+      C: {
+        badge: "MATERI C — KENAMPAKAN ALAM (DARATAN & PERAIRAN)",
+        title: "Bentuk Timbul Daratan (Gunung, Pegunungan, Dataran Rendah) & Perairan (Sungai, Laut)",
+        desc: "Perhatikan permukaan 3D timbul pada peta: Gunung dan Pegunungan menjulang tinggi berbentuk kerucut/punggungan cokelat, Dataran Rendah tampak landai di pesisir pulau, Sungai mengalir berlekuk biru di atas daratan menuju Laut dan Samudra.",
+        camPos: [-6, 16, 32], target: [0, 1, 0]
+      }
+    };
+
+    const ISLAND_INFO = {
+      sumatra: {
+        badge: "PULAU BESAR 1 — SUMATRA (MERAH-ORANYE)",
+        title: "Pulau Sumatra & Kenampakan Alamnya",
+        desc: "Terletak di ujung barat Indonesia. Kenampakan alam daratan: membentang Pegunungan Bukit Barisan, Gunung Kerinci (3.805 m), dan dataran rendah timur yang luas. Kenampakan perairan: Sungai Musi, Sungai Batanghari, dan Danau Toba.",
+        camPos: [-16, 14, 18], target: [-15, 1, -2]
+      },
+      jawa: {
+        badge: "PULAU BESAR 2 — JAWA (KUNING EMAS)",
+        title: "Pulau Jawa & Kenampakan Alamnya",
+        desc: "Pulau pusat pemerintahan (DKI Jakarta). Kenampakan alam daratan: deretan gunung berapi aktif seperti Gunung Semeru (3.676 m), Gunung Merapi, Pegunungan Kapur Selatan, dan Dataran Rendah Pantura. Perairan: Sungai Bengawan Solo & Sungai Brantas.",
+        camPos: [-5, 11, 18], target: [-5, 1, 7.5]
+      },
+      kalimantan: {
+        badge: "PULAU BESAR 3 — KALIMANTAN (HIJAU ZAMRUD)",
+        title: "Pulau Kalimantan & Kenampakan Alamnya",
+        desc: "Terkenal dengan dataran rendah hutan hujan tropis dan sungai-sungai raksasa. Kenampakan alam daratan: Pegunungan Muller & Pegunungan Schwaner. Kenampakan perairan: Sungai Kapuas (sungai terpanjang di Indonesia, 1.143 km) dan Sungai Mahakam.",
+        camPos: [-2, 15, 14], target: [-2, 1, -3.5]
+      },
+      sulawesi: {
+        badge: "PULAU BESAR 4 — SULAWESI (UNGU MAGENTA)",
+        title: "Pulau Sulawesi & Kenampakan Alamnya",
+        desc: "Berbentuk unik menyerupai huruf 'K'. Kenampakan alam daratan didominasi pegunungan lipatan curam seperti Gunung Latimojong (3.478 m) dan dataran rendah sempit di pesisir. Perairan: Danau Poso, Sungai Lariang, Laut Sulawesi, dan Teluk Bone.",
+        camPos: [7, 14, 15], target: [6.8, 1, -1.5]
+      },
+      papua: {
+        badge: "PULAU BESAR 5 — PAPUA (BIRU TOSKA)",
+        title: "Pulau Papua & Kenampakan Alamnya",
+        desc: "Terletak di ujung timur Indonesia (Merauke). Memiliki kenampakan alam tertinggi di Indonesia yaitu Pegunungan Jayawijaya (Puncak Jaya 4.884 m yang bersalju abadi), dataran rendah rawa luas di selatan, serta Sungai Mamberamo dan Sungai Digul.",
+        camPos: [20, 15, 18], target: [19.5, 1.5, 1]
+      }
+    };
+
+    // =========================================================================
+    // INISIALISASI SCENE THREE.JS
+    // =========================================================================
+    const container = document.getElementById('canvas-container');
+    const labelsContainer = document.getElementById('labels-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x07182e);
+    scene.fog = new THREE.FogExp2(0x07182e, 0.0085);
+
+    const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 250);
+    camera.position.set(0, 34, 42);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.maxPolarAngle = Math.PI / 2 - 0.06;
+    controls.minDistance = 8;
+    controls.maxDistance = 75;
+
+    // Pencahayaan (Lighting) agar Relief 3D Timbul Sangat Jelas
+    const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.72);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1.15);
+    sunLight.position.set(22, 42, 28);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.left = -35;
+    sunLight.shadow.camera.right = 35;
+    sunLight.shadow.camera.top = 25;
+    sunLight.shadow.camera.bottom = -25;
+    scene.add(sunLight);
+
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.45);
+    rimLight.position.set(-25, 20, -20);
+    scene.add(rimLight);
+
+    const worldGroup = new THREE.Group();
+    scene.add(worldGroup);
+
+    // =========================================================================
+    // 1. LAUT & SAMUDRA 3D (PERAIRAN) + MEJA DIORAMA
+    // =========================================================================
+    const baseFrameGeo = new THREE.BoxGeometry(58, 1.6, 34);
+    const baseFrameMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.7 });
+    const baseFrame = new THREE.Mesh(baseFrameGeo, baseFrameMat);
+    baseFrame.position.y = -1.1;
+    worldGroup.add(baseFrame);
+
+    const oceanGeo = new THREE.BoxGeometry(56, 0.8, 32, 56, 1, 32);
+    const oceanMat = new THREE.MeshStandardMaterial({
+      color: 0x0284c7,
+      roughness: 0.25,
+      metalness: 0.15,
+    });
+    const oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
+    oceanMesh.position.y = -0.35;
+    oceanMesh.receiveShadow = true;
+    worldGroup.add(oceanMesh);
+
+    // Grid garis lintang & bujur tipis di permukaan laut
+    const gridHelper = new THREE.GridHelper(56, 28, 0x38bdf8, 0x0369a1);
+    gridHelper.position.y = 0.06;
+    gridHelper.scale.z = 32 / 56;
+    gridHelper.material.opacity = 0.25;
+    gridHelper.material.transparent = true;
+    worldGroup.add(gridHelper);
+
+    // =========================================================================
+    // FUNGSI PEMBUAT PULAU 3D TIMBUL (EXTRUDED BEVEL MESH)
+    // =========================================================================
+    const clickableMeshes = [];
+    const islandMeshes = {};
+
+    function createIsland3D(points2D, colorHex, height = 0.9, islandKey = null) {
+      const shape = new THREE.Shape();
+      points2D.forEach((pt, idx) => {
+        if (idx === 0) shape.moveTo(pt[0], -pt[1]);
+        else shape.lineTo(pt[0], -pt[1]);
+      });
+      shape.closePath();
+
+      const extrudeSettings = {
+        depth: height,
+        bevelEnabled: true,
+        bevelSegments: 3,
+        steps: 1,
+        bevelSize: 0.25,
+        bevelThickness: 0.28
+      };
+      const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+      geo.rotateX(-Math.PI / 2);
+
+      const mat = new THREE.MeshStandardMaterial({
+        color: colorHex,
+        roughness: 0.45,
+        metalness: 0.08
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.y = 0.05;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      if (islandKey) {
+        mesh.userData = { islandKey };
+        clickableMeshes.push(mesh);
+        islandMeshes[islandKey] = mesh;
+      }
+      worldGroup.add(mesh);
+      return mesh;
+    }
+
+    // =========================================================================
+    // 2. PEMBUATAN 5 PULAU BESAR (WARNA BERBEDA) + KEPULAUAN LAINNYA
+    // =========================================================================
+    // 1. SUMATRA (Merah-Oranye #ef4444)
+    createIsland3D([
+      [-22.5, -8.2], [-20.5, -7.8], [-18.2, -5.8], [-15.8, -3.5],
+      [-13.5, -1.2], [-11.5, 1.5], [-10.2, 3.8], [-11.2, 5.2],
+      [-13.0, 4.2], [-15.2, 1.8], [-17.8, -0.8], [-20.2, -3.8], [-22.8, -6.8]
+    ], 0xef4444, 0.95, 'sumatra');
+
+    // 2. JAWA (Kuning Emas #f59e0b)
+    createIsland3D([
+      [-10.2, 6.2], [-7.5, 6.5], [-4.5, 6.8], [-1.5, 7.0],
+      [1.8, 7.3], [2.4, 8.4], [-1.2, 8.5], [-5.0, 8.2],
+      [-8.5, 7.8], [-10.5, 7.2]
+    ], 0xf59e0b, 0.95, 'jawa');
+
+    // 3. KALIMANTAN (Hijau Zamrud #10b981)
+    createIsland3D([
+      [-6.8, -4.2], [-3.8, -5.8], [-0.5, -7.8], [1.8, -7.2],
+      [2.6, -4.5], [1.5, -2.0], [1.8, 0.8], [-0.2, 2.2],
+      [-3.2, 1.8], [-5.8, 0.8], [-7.2, -1.5]
+    ], 0x10b981, 0.95, 'kalimantan');
+
+    // 4. SULAWESI (Ungu Magenta #a855f7 — Bentuk khas huruf K)
+    createIsland3D([
+      [4.8, -5.2], [8.5, -5.8], [10.2, -5.0], [9.5, -3.8],
+      [6.5, -3.5], [6.2, -2.0], [9.2, -1.8], [9.5, -0.5],
+      [6.8, -0.2], [8.8, 2.2], [7.8, 3.5], [6.2, 1.2],
+      [5.5, 3.8], [4.2, 3.6], [4.4, -2.5]
+    ], 0xa855f7, 0.95, 'sulawesi');
+
+    // 5. PAPUA (Biru Toska #06b6d4)
+    createIsland3D([
+      [13.5, -2.5], [16.0, -3.2], [17.2, -1.8], [19.5, -2.5],
+      [23.8, -1.5], [24.2, 4.8], [21.5, 5.2], [20.2, 3.5],
+      [17.5, 2.2], [15.5, 0.2], [13.2, -1.0]
+    ], 0x06b6d4, 0.95, 'papua');
+
+    // Pulau-pulau Nusantara lainnya (Bali, NTB, NTT, Maluku, Bangka-Belitung)
+    createIsland3D([[3.0, 7.6], [4.2, 7.6], [4.2, 8.4], [3.0, 8.4]], 0xfde047, 0.7); // Bali
+    createIsland3D([[4.8, 7.8], [7.2, 7.8], [7.2, 8.6], [4.8, 8.6]], 0xfde047, 0.7); // NTB
+    createIsland3D([[7.8, 8.0], [11.2, 8.2], [11.2, 9.0], [7.8, 8.8]], 0xfde047, 0.7); // NTT
+    createIsland3D([[10.8, -3.8], [12.2, -3.8], [12.0, -1.2], [10.8, -1.2]], 0xf472b6, 0.75); // Halmahera
+    createIsland3D([[10.5, 0.8], [12.8, 0.8], [12.8, 1.8], [10.5, 1.8]], 0xf472b6, 0.75); // Seram/Maluku
+    createIsland3D([[-9.5, 1.2], [-8.2, 1.2], [-8.2, 2.4], [-9.5, 2.4]], 0xfb923c, 0.7); // Bangka
+
+    // Siluet Benua Pengapit (Materi A: Benua Asia di Utara & Benua Australia di Selatan)
+    createIsland3D([[-25, -14.5], [-6, -14.5], [-8, -10.5], [-25, -11.5]], 0x64748b, 0.55); // Benua Asia
+    createIsland3D([[8, 11.5], [25, 11.5], [25, 14.8], [6, 14.8]], 0xd97706, 0.55); // Benua Australia
+
+    // =========================================================================
+    // 3. KENAMPAKAN ALAM TIMBUL (MATERI C: GUNUNG, PEGUNUNGAN, DATARAN RENDAH, SUNGAI)
+    // =========================================================================
+    const natureGroup = new THREE.Group();
+    worldGroup.add(natureGroup);
+
+    // Fungsi pembuat Dataran Rendah Timbul (Hijau Muda di atas pulau)
+    function addLowlandPatch(x, z, rx, rz) {
+      const geo = new THREE.CylinderGeometry(rx, rx * 1.1, 0.22, 20);
+      geo.scale(1, 1, rz / rx);
+      const mat = new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.6 });
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, 1.15, z);
+      natureGroup.add(m);
+    }
+    // Dataran rendah di 5 Pulau Besar
+    addLowlandPatch(-13.5, 1.0, 2.2, 3.2);  // Dataran Rendah Timur Sumatra
+    addLowlandPatch(-5.5, 7.1, 3.2, 0.6);   // Dataran Rendah Pantura Jawa
+    addLowlandPatch(-3.2, 0.2, 3.0, 2.2);   // Dataran Rendah Kalimantan Selatan/Barat
+    addLowlandPatch(5.2, 1.8, 1.1, 1.6);    // Dataran Rendah Sulawesi Selatan
+    addLowlandPatch(20.5, 2.8, 2.4, 1.8);   // Dataran Rendah Papua Selatan
+
+    // Fungsi pembuat Gunung & Pegunungan Timbul (Kerucut 3D Bertingkat)
+    function addMountainRange(peaks, hasSnow = false, hasVolcano = false) {
+      peaks.forEach(([x, z, r, h], idx) => {
+        const coneGeo = new THREE.ConeGeometry(r, h, 16);
+        const coneMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.75 });
+        const cone = new THREE.Mesh(coneGeo, coneMat);
+        cone.position.set(x, 1.1 + h / 2, z);
+        cone.castShadow = true;
+        natureGroup.add(cone);
+
+        // Sabuk hutan lereng hijau tua di kaki gunung
+        const baseGeo = new THREE.ConeGeometry(r * 1.18, h * 0.45, 16);
+        const baseMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.8 });
+        const base = new THREE.Mesh(baseGeo, baseMat);
+        base.position.set(x, 1.1 + (h * 0.45) / 2, z);
+        natureGroup.add(base);
+
+        // Puncak Salju Abadi (Khusus Puncak Jaya Papua) или Kawah Gunung Berapi
+        if (hasSnow && idx === 0) {
+          const capGeo = new THREE.ConeGeometry(r * 0.42, h * 0.38, 16);
+          const capMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+          const cap = new THREE.Mesh(capGeo, capMat);
+          cap.position.set(x, 1.1 + h - (h * 0.38) / 2 + 0.05, z);
+          natureGroup.add(cap);
+        } else if (hasVolcano && idx === 0) {
+          const lavaGeo = new THREE.CylinderGeometry(r * 0.22, r * 0.3, 0.3, 12);
+          const lavaMat = new THREE.MeshStandardMaterial({ color: 0xff3b00, emissive: 0xdc2626, emissiveIntensity: 0.8 });
+          const lava = new THREE.Mesh(lavaGeo, lavaMat);
+          lava.position.set(x, 1.1 + h - 0.1, z);
+          natureGroup.add(lava);
+        }
+      });
+    }
+
+    // 1. Pegunungan Bukit Barisan & G. Kerinci (Sumatra)
+    addMountainRange([
+      [-16.2, -0.5, 1.25, 3.6], // G. Kerinci
+      [-19.2, -4.2, 1.05, 2.6],
+      [-17.8, -2.4, 1.1, 2.8],
+      [-14.2, 1.8, 1.0, 2.5],
+      [-12.2, 3.6, 0.95, 2.3]
+    ], false, true);
+
+    // 2. Deretan Gunung Berapi Jawa (G. Semeru, Merapi, Slamet)
+    addMountainRange([
+      [-0.5, 7.8, 1.15, 3.5], // G. Semeru
+      [-3.8, 7.7, 1.05, 3.1], // G. Merapi
+      [-6.8, 7.5, 1.0, 2.7],  // G. Ciremai/Gede
+    ], false, true);
+
+    // 3. Pegunungan Muller & Schwaner (Kalimantan)
+    addMountainRange([
+      [-1.5, -3.5, 1.35, 2.8],
+      [-3.2, -2.5, 1.2, 2.4],
+      [0.2, -4.8, 1.25, 2.6]
+    ], false, false);
+
+    // 4. Pegunungan Latimojong (Sulawesi)
+    addMountainRange([
+      [5.5, -1.2, 1.15, 3.2],
+      [6.2, -2.8, 1.0, 2.5],
+      [7.2, -4.5, 0.95, 2.3]
+    ], false, false);
+
+    // 5. Pegunungan Jayawijaya / Puncak Jaya Bersalju (Papua)
+    addMountainRange([
+      [19.2, 0.2, 1.5, 4.3],  // Puncak Jaya (Salju Abadi)
+      [17.4, -0.3, 1.25, 3.3],
+      [21.2, 0.8, 1.3, 3.4]
+    ], true, false);
+
+    // Fungsi pembuat Sungai 3D Mengalir di atas Daratan Pulau
+    function addRiver3D(pts) {
+      const vectors = pts.map(p => new THREE.Vector3(p[0], 1.26, p[1]));
+      const curve = new THREE.CatmullRomCurve3(vectors);
+      const tubeGeo = new THREE.TubeGeometry(curve, 32, 0.18, 8, false);
+      const tubeMat = new THREE.MeshStandardMaterial({
+        color: 0x0ea5e9,
+        emissive: 0x0284c7,
+        emissiveIntensity: 0.35,
+        roughness: 0.15
+      });
+      const river = new THREE.Mesh(tubeGeo, tubeMat);
+      natureGroup.add(river);
+    }
+
+    // Sungai Kapuas & Sungai Mahakam (Kalimantan)
+    addRiver3D([[-1.6, -3.2], [-3.5, -2.2], [-5.2, -1.4], [-6.8, -1.2]]);
+    addRiver3D([[-0.8, -3.2], [0.4, -2.4], [1.5, -1.6]]);
+    // Sungai Musi (Sumatra)
+    addRiver3D([[-15.5, 0.2], [-13.8, 0.8], [-11.8, 1.2]]);
+    // Sungai Bengawan Solo (Jawa)
+    addRiver3D([[-3.5, 7.7], [-2.2, 7.3], [-1.0, 7.0]]);
+    // Sungai Mamberamo / Digul (Papua)
+    addRiver3D([[19.5, 0.6], [20.2, 2.2], [19.8, 3.8]]);
+
+    // =========================================================================
+    // 4. LABEL 3D INTERAKTIF (PULAU BESAR, BENUA/SAMUDRA, & KENAMPAKAN ALAM)
+    // =========================================================================
+    const labelItems = [
+      // B. 5 Pulau Besar
+      { text: "1. PULAU SUMATRA", sub: "G. Kerinci & Sungai Musi", pos: new THREE.Vector3(-16.5, 4.8, -1.0), type: "B", key: "sumatra", color: "#ef4444" },
+      { text: "2. PULAU JAWA", sub: "G. Semeru & Bengawan Solo", pos: new THREE.Vector3(-4.2, 4.6, 7.8), type: "B", key: "jawa", color: "#f59e0b" },
+      { text: "3. PULAU KALIMANTAN", sub: "Sungai Kapuas & Peg. Muller", pos: new THREE.Vector3(-2.2, 4.4, -2.8), type: "B", key: "kalimantan", color: "#10b981" },
+      { text: "4. PULAU SULAWESI", sub: "G. Latimojong & Laut Sulawesi", pos: new THREE.Vector3(6.5, 4.6, -1.5), type: "B", key: "sulawesi", color: "#a855f7" },
+      { text: "5. PULAU PAPUA", sub: "Peg. Jayawijaya & Sungai Digul", pos: new THREE.Vector3(19.5, 5.6, 0.2), type: "B", key: "papua", color: "#06b6d4" },
+
+      // A. Geografis (Benua & Samudra)
+      { text: "BENUA ASIA", sub: "Sebelah Utara-Barat", pos: new THREE.Vector3(-16, 2.0, -12.8), type: "A", cls: "label-geo" },
+      { text: "BENUA AUSTRALIA", sub: "Sebelah Selatan-Timur", pos: new THREE.Vector3(16, 2.0, 13.2), type: "A", cls: "label-geo" },
+      { text: "SAMUDRA HINDIA", sub: "Perairan Selatan & Barat", pos: new THREE.Vector3(-14, 0.8, 11.5), type: "A", cls: "label-geo" },
+      { text: "SAMUDRA PASIFIK", sub: "Perairan Timur & Utara", pos: new THREE.Vector3(18, 0.8, -8.5), type: "A", cls: "label-geo" },
+
+      // C. Kenampakan Alam Spesifik
+      { text: "⛰️ Pegunungan Bukit Barisan", sub: "Daratan Tinggi (Sumatra)", pos: new THREE.Vector3(-18.2, 3.8, -3.2), type: "C", cls: "label-nature" },
+      { text: "🌋 Gunung Semeru & Merapi", sub: "Gunung Berapi (Jawa)", pos: new THREE.Vector3(-0.5, 4.8, 7.8), type: "C", cls: "label-nature" },
+      { text: "💧 Sungai Kapuas (1.143 km)", sub: "Perairan Sungai (Kalimantan)", pos: new THREE.Vector3(-5.2, 2.4, -1.2), type: "C", cls: "label-nature" },
+      { text: "🌿 Dataran Rendah Kalimantan", sub: "Daratan Landai (< 200 m)", pos: new THREE.Vector3(-3.0, 2.0, 1.2), type: "C", cls: "label-nature" },
+      { text: "🏔️ Pegunungan Jayawijaya", sub: "Puncak Tertinggi (Papua)", pos: new THREE.Vector3(19.2, 5.8, 0.2), type: "C", cls: "label-nature" },
+      { text: "🌊 Laut Jawa", sub: "Perairan Antar-Pulau", pos: new THREE.Vector3(-3.5, 0.6, 4.5), type: "C", cls: "label-nature" }
+    ];
+
+    labelItems.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'label-3d ' + (item.cls || '');
+      if (item.color) div.style.borderColor = item.color;
+      div.innerHTML = `${item.text}<span class="sub">${item.sub}</span>`;
+      if (item.key) {
+        div.onclick = () => focusIsland(item.key);
+      }
+      labelsContainer.appendChild(div);
+      item.el = div;
+    });
+
+    let currentTopicMode = 'all';
+
+    function updateLabelsProjection() {
+      labelItems.forEach(item => {
+        const show =
+          currentTopicMode === 'all' ? (item.type === 'B' || item.type === 'A') :
+          currentTopicMode === item.type || (currentTopicMode === 'C' && item.type === 'C');
+
+        if (!show) {
+          item.el.style.display = 'none';
+          return;
+        }
+        const v = item.pos.clone();
+        v.project(camera);
+        if (v.z > 1) {
+          item.el.style.display = 'none';
+          return;
+        }
+        const x = (v.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-(v.y * 0.5) + 0.5) * window.innerHeight;
+        item.el.style.display = 'block';
+        item.el.style.left = `${x}px`;
+        item.el.style.top = `${y}px`;
+      });
+    }
+
+    // =========================================================================
+    // 5. INTERAKSI KAMERA, KLIK PULAU, FILTER MATERI, & TEXT-TO-SPEECH
+    // =========================================================================
+    let targetCamPos = new THREE.Vector3(0, 34, 42);
+    let targetLookAt = new THREE.Vector3(0, 0, 0);
+    let isAnimatingCam = false;
+
+    function moveCameraSmooth(posArr, lookArr) {
+      targetCamPos.set(...posArr);
+      targetLookAt.set(...lookArr);
+      isAnimatingCam = true;
+    }
+
+    function setInfoPanel(badge, title, desc) {
+      document.getElementById('info-badge').innerText = badge;
+      document.getElementById('info-title').innerText = title;
+      document.getElementById('info-desc').innerText = desc;
+    }
+
+    function setTopicMode(mode, btnEl) {
+      currentTopicMode = mode;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      const d = TOPIC_DATA[mode];
+      setInfoPanel(d.badge, d.title, d.desc);
+      moveCameraSmooth(d.camPos, d.target);
+    }
+
+    function focusIsland(key) {
+      const d = ISLAND_INFO[key];
+      if (!d) return;
+      setInfoPanel(d.badge, d.title, d.desc);
+      moveCameraSmooth(d.camPos, d.target);
+
+      // Highlight pulau yang dipilih dengan sedikit terangkat
+      Object.keys(islandMeshes).forEach(k => {
+        islandMeshes[k].position.y = (k === key) ? 0.55 : 0.05;
+      });
+    }
+
+    function resetCamera() {
+      Object.keys(islandMeshes).forEach(k => islandMeshes[k].position.y = 0.05);
+      setTopicMode('all', document.querySelector('.tab-btn'));
+    }
+
+    function speakCurrentInfo() {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const title = document.getElementById('info-title').innerText;
+      const desc = document.getElementById('info-desc').innerText;
+      const utter = new SpeechSynthesisUtterance(title + ". " + desc);
+      utter.lang = 'id-ID';
+      utter.rate = 1.0;
+      window.speechSynthesis.speak(utter);
+    }
+
+    function exportGLB() {
+      const exporter = new THREE.GLTFExporter();
+      exporter.parse(worldGroup, function (result) {
+        const blob = new Blob([result], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Peta_Timbul_3D_Indonesia.glb';
+        link.click();
+      }, { binary: true });
+    }
+
+    // Raycaster untuk klik langsung pada pulau 3D di layar
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(clickableMeshes);
+      if (intersects.length > 0) {
+        const key = intersects[0].object.userData.islandKey;
+        if (key) focusIsland(key);
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Loop Animasi Utama
+    let clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
+      // Animasi napas ombak laut halus
+      oceanMesh.position.y = -0.35 + Math.sin(t * 2.0) * 0.04;
+
+      if (isAnimatingCam) {
+        camera.position.lerp(targetCamPos, 0.07);
+        controls.target.lerp(targetLookAt, 0.07);
+        if (camera.position.distanceTo(targetCamPos) < 0.15) {
+          isAnimatingCam = false;
+        }
+      }
+
+      controls.update();
+      updateLabelsProjection();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
