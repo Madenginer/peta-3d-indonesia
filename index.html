@@ -422,7 +422,6 @@
       padding: 9px 11px;
       left: 10px;
       right: 10px;
-      width: calc(100vw - 20px);
       top: max(8px, env(safe-area-inset-top));
     }
     .brand-meta {
@@ -445,7 +444,6 @@
     .bottom-dock {
       left: 10px;
       right: 10px;
-      width: calc(100vw - 20px);
       bottom: max(8px, env(safe-area-inset-bottom));
       gap: 6px;
     }
@@ -599,14 +597,14 @@ controls.panSpeed = 0.75;
 // Responsive camera framing for Desktop, Tablet, and Portrait Mobile
 function getDefaultCamPos() {
   const aspect = window.innerWidth / Math.max(1, window.innerHeight);
-  if (aspect < 0.65) {
-    camera.fov = 48;
+  if (aspect < 0.75) {
+    camera.fov = 55;
     camera.updateProjectionMatrix();
-    return new THREE.Vector3(0, 38.0, 44.0);
-  } else if (aspect < 1.05) {
-    camera.fov = 42;
+    return new THREE.Vector3(0, 42.0, 50.0);
+  } else if (aspect < 1.15) {
+    camera.fov = 44;
     camera.updateProjectionMatrix();
-    return new THREE.Vector3(0, 28.0, 32.0);
+    return new THREE.Vector3(0, 29.0, 33.0);
   }
   camera.fov = 36;
   camera.updateProjectionMatrix();
