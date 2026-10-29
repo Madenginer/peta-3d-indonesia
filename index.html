@@ -419,71 +419,97 @@
       flex-direction: column;
       align-items: stretch;
       gap: 8px;
-      padding: 9px 12px;
+      padding: 9px 11px;
       left: 10px;
       right: 10px;
+      width: calc(100vw - 20px);
       top: max(8px, env(safe-area-inset-top));
     }
     .brand-meta {
       display: none;
     }
     .seg-nav {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       width: 100%;
-      justify-content: space-between;
+      gap: 3px;
     }
     .seg-btn {
-      flex: 1;
       justify-content: center;
-      padding: 6px 8px;
-      font-size: 11px;
+      padding: 6px 4px;
+      font-size: 10.5px;
+      gap: 3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .bottom-dock {
       left: 10px;
       right: 10px;
+      width: calc(100vw - 20px);
       bottom: max(8px, env(safe-area-inset-bottom));
       gap: 6px;
     }
     .island-bar {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       width: 100%;
-      padding: 5px 8px;
+      padding: 5px 6px;
+      gap: 4px;
     }
     .bar-label {
       display: none;
+    }
+    .isl-chip {
+      justify-content: center;
+      padding: 5px 3px;
+      font-size: 10px;
+      gap: 4px;
     }
     .inspector {
       flex-direction: column;
       align-items: stretch;
       padding: 10px 12px;
-      gap: 10px;
+      gap: 9px;
+      width: 100%;
+    }
+    .insp-header {
+      flex-wrap: wrap;
+      gap: 6px;
     }
     .insp-title {
-      font-size: 13px;
+      font-size: 12.5px;
     }
     .insp-desc {
-      font-size: 11.5px;
+      font-size: 11px;
       line-height: 1.38;
     }
     .insp-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       width: 100%;
-      justify-content: stretch;
+      gap: 8px;
     }
     .icon-btn {
-      flex: 1;
       justify-content: center;
-      padding: 7px 10px;
-      font-size: 11.5px;
+      padding: 7px 8px;
+      font-size: 11px;
     }
     .marker-sub {
       display: none;
     }
     .marker-card {
-      padding: 3px 6px;
+      padding: 2.5px 5px;
+      gap: 4px;
     }
     .marker-title {
-      font-size: 10px;
+      font-size: 8.8px;
+    }
+    .marker-dot {
+      width: 5px;
+      height: 5px;
     }
     .marker-stem {
-      height: 6px;
+      height: 5px;
     }
   }
 </style>
@@ -565,7 +591,7 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.06;
 controls.maxPolarAngle = Math.PI / 2 - 0.05;
 controls.minDistance = 6;
-controls.maxDistance = 68;
+controls.maxDistance = 95;
 controls.rotateSpeed = 0.75;
 controls.zoomSpeed = 0.9;
 controls.panSpeed = 0.75;
@@ -574,13 +600,17 @@ controls.panSpeed = 0.75;
 function getDefaultCamPos() {
   const aspect = window.innerWidth / Math.max(1, window.innerHeight);
   if (aspect < 0.65) {
-    // Portrait phone: pull camera back so full 36-unit width fits cleanly
-    return new THREE.Vector3(0, 34.0, 38.0);
+    camera.fov = 48;
+    camera.updateProjectionMatrix();
+    return new THREE.Vector3(0, 38.0, 44.0);
   } else if (aspect < 1.05) {
-    // Tablet / square viewport
-    return new THREE.Vector3(0, 26.5, 29.5);
+    camera.fov = 42;
+    camera.updateProjectionMatrix();
+    return new THREE.Vector3(0, 28.0, 32.0);
   }
-  return new THREE.Vector3(0, 20.5, 22.5);
+  camera.fov = 36;
+  camera.updateProjectionMatrix();
+  return new THREE.Vector3(0, 23.0, 26.0);
 }
 
 function getDefaultTarget() {
@@ -665,10 +695,10 @@ const PINS = [
   { id: 'papua', kind: 'island', topics: ['all', 'B'], pos: ll(135.2, -3.9, 1.85), color: '#2dd4da', tag: 'PULAU BESAR 5', title: '5. Pulau Papua', sub: '785.753 km²', focus: [ll(137.0, -4.2, 0), [10.5, 10.5, 9.5]], desc: 'Pulau di ujung timur Indonesia (warna <b>Biru-Toska</b>). Memiliki barisan <b>Pegunungan Jayawijaya (Puncak Jaya 4.884 mdpl)</b> yang bersalju abadi, serta dataran rendah rawa luas yang dialiri <b>Sungai Mamberamo</b> dan <b>Sungai Digul</b>.' },
 
   // Materi A: Letak Geografis (2 Benua & 2 Samudra)
-  { id: 'asia', kind: 'geo', topics: ['all', 'A'], pos: ll(102.5, 6.2, 0.9), color: '#cbd5e1', tag: 'BATAS BENUA', title: 'BENUA ASIA', sub: 'Utara-Barat', focus: [ll(104.0, 4.0, 0), [-8, 14, 12]], desc: 'Di sebelah utara dan barat, kepulauan Indonesia berbatasan dengan daratan <b>Benua Asia</b> (meliputi kawasan Asia Tenggara seperti Malaysia, Singapura, Thailand, Vietnam, dan Filipina).' },
-  { id: 'australia', kind: 'geo', topics: ['all', 'A'], pos: ll(133.5, -12.0, 0.8), color: '#fcd34d', tag: 'BATAS BENUA', title: 'BENUA AUSTRALIA', sub: 'Selatan-Timur', focus: [ll(132.0, -10.5, 0), [9, 13.5, 14]], desc: 'Di sebelah selatan dan tenggara, wilayah Indonesia berbatasan langsung dengan <b>Benua Australia</b> yang dipisahkan oleh perairan Laut Timor dan Laut Arafura.' },
-  { id: 'hindia', kind: 'geo', topics: ['all', 'A', 'C'], pos: ll(100.5, -9.8, 0.45), color: '#7dd3fc', tag: 'BATAS SAMUDRA', title: 'SAMUDRA HINDIA', sub: 'Barat & Selatan', focus: [ll(104.0, -8.5, 0), [-6, 13.5, 15]], desc: '<b>Samudra Hindia</b> membentang luas di sisi barat Pulau Sumatra dan selatan Pulau Jawa hingga Nusa Tenggara, ditandai dengan palung laut dalam.' },
-  { id: 'pasifik', kind: 'geo', topics: ['all', 'A', 'C'], pos: ll(136.5, 3.8, 0.45), color: '#7dd3fc', tag: 'BATAS SAMUDRA', title: 'SAMUDRA PASIFIK', sub: 'Utara & Timur', focus: [ll(135.0, 1.5, 0), [10, 14, 11]], desc: '<b>Samudra Pasifik</b> membatasi kepulauan Indonesia di sebelah utara Pulau Papua dan Kepulauan Maluku Utara.' },
+  { id: 'asia', kind: 'geo', topics: ['all', 'A'], pos: ll(103.5, 6.2, 0.9), color: '#cbd5e1', tag: 'BATAS BENUA', title: 'BENUA ASIA', sub: 'Utara-Barat', focus: [ll(104.0, 4.0, 0), [-8, 14, 12]], desc: 'Di sebelah utara dan barat, kepulauan Indonesia berbatasan dengan daratan <b>Benua Asia</b> (meliputi kawasan Asia Tenggara seperti Malaysia, Singapura, Thailand, Vietnam, dan Filipina).' },
+  { id: 'australia', kind: 'geo', topics: ['all', 'A'], pos: ll(130.5, -11.5, 0.8), color: '#fcd34d', tag: 'BATAS BENUA', title: 'BENUA AUSTRALIA', sub: 'Selatan-Timur', focus: [ll(132.0, -10.5, 0), [9, 13.5, 14]], desc: 'Di sebelah selatan dan tenggara, wilayah Indonesia berbatasan langsung dengan <b>Benua Australia</b> yang dipisahkan oleh perairan Laut Timor dan Laut Arafura.' },
+  { id: 'hindia', kind: 'geo', topics: ['all', 'A', 'C'], pos: ll(104.0, -10.2, 0.45), color: '#7dd3fc', tag: 'BATAS SAMUDRA', title: 'SAMUDRA HINDIA', sub: 'Barat & Selatan', focus: [ll(104.0, -8.5, 0), [-6, 13.5, 15]], desc: '<b>Samudra Hindia</b> membentang luas di sisi barat Pulau Sumatra dan selatan Pulau Jawa hingga Nusa Tenggara, ditandai dengan palung laut dalam.' },
+  { id: 'pasifik', kind: 'geo', topics: ['all', 'A', 'C'], pos: ll(134.5, 3.8, 0.45), color: '#7dd3fc', tag: 'BATAS SAMUDRA', title: 'SAMUDRA PASIFIK', sub: 'Utara & Timur', focus: [ll(135.0, 1.5, 0), [10, 14, 11]], desc: '<b>Samudra Pasifik</b> membatasi kepulauan Indonesia di sebelah utara Pulau Papua dan Kepulauan Maluku Utara.' },
 
   // Materi C: Kenampakan Alam Timbul
   { id: 'jayawijaya', kind: 'relief', topics: ['C'], pos: ll(137.8, -4.05, 2.05), color: '#f8fafc', tag: 'PEGUUNGAN TERTINGGI', title: 'Peg. Jayawijaya', sub: '4.884 mdpl', focus: [ll(137.8, -4.0, 0), [11, 7.8, 7.5]], desc: '<b>Pegunungan Timbul Tertinggi:</b> Rangkaian Pegunungan Tengah / Jayawijaya di Papua menjulang hingga 4.884 mdpl (Puncak Jaya), membentuk dinding relief tertinggi di Indonesia.' },
