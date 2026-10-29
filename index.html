@@ -413,13 +413,52 @@
     background: rgba(148, 163, 184, 0.35);
   }
 
+  /* Hamburger Toggle Button (Hidden on Desktop, Shown on Mobile) */
+  .menu-toggle {
+    display: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #f8fafc;
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .menu-toggle:hover, .menu-toggle.open {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+  .menu-toggle svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    stroke-width: 2.2;
+     stroke-linecap: round;
+    fill: none;
+  }
+
+  .mobile-active-pill {
+    display: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: #cbd5e1;
+    margin-top: 2px;
+  }
+
   /* Responsive Design for Smartphones & Tablets */
   @media (max-width: 820px) {
     .topbar {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 8px;
-      padding: 9px 11px;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
       left: 10px;
       right: 10px;
       top: max(8px, env(safe-area-inset-top));
@@ -427,19 +466,41 @@
     .brand-meta {
       display: none;
     }
+    .mobile-active-pill {
+      display: block;
+    }
+    .menu-toggle {
+      display: inline-flex;
+    }
+    /* Turn .seg-nav into a clean dropdown menu under the topbar */
     .seg-nav {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      width: 100%;
-      gap: 3px;
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      align-items: stretch;
+      background: rgba(11, 19, 32, 0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 12px;
+      padding: 6px;
+      gap: 4px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+      z-index: 50;
+    }
+    .seg-nav.show {
+      display: flex;
     }
     .seg-btn {
-      justify-content: center;
-      padding: 6px 4px;
-      font-size: 10.5px;
-      gap: 3px;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      width: 100%;
+      justify-content: flex-start;
+      padding: 10px 12px;
+      font-size: 12.5px;
+      gap: 8px;
+      border-radius: 8px;
     }
     .bottom-dock {
       left: 10px;
@@ -448,20 +509,20 @@
       gap: 6px;
     }
     .island-bar {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
       width: 100%;
-      padding: 5px 6px;
-      gap: 4px;
+      padding: 6px 8px;
+      gap: 6px;
     }
     .bar-label {
       display: none;
     }
     .isl-chip {
-      justify-content: center;
-      padding: 5px 3px;
-      font-size: 10px;
-      gap: 4px;
+      padding: 5px 9px;
+      font-size: 11px;
+      gap: 5px;
     }
     .inspector {
       flex-direction: column;
@@ -496,11 +557,11 @@
       display: none;
     }
     .marker-card {
-      padding: 2.5px 5px;
+      padding: 2.5px 6px;
       gap: 4px;
     }
     .marker-title {
-      font-size: 8.8px;
+      font-size: 9.5px;
     }
     .marker-dot {
       width: 5px;
@@ -524,10 +585,15 @@
     <div class="brand-text">
       <div class="brand-title">Atlas Topografi 3D Kepulauan Indonesia</div>
       <div class="brand-meta">DATA ELEVASI SRTM &bull; 06&deg;N&ndash;11&deg;S / 95&deg;E&ndash;141&deg;E</div>
+      <div class="mobile-active-pill" id="mobile-topic-label">Mode: Semua Materi</div>
     </div>
   </div>
-  <nav class="seg-nav" aria-label="Filter Materi Pembelajaran">
-    <button class="seg-btn active" onclick="setTopic('all', this)">Semua</button>
+  <button class="menu-toggle" id="menu-toggle-btn" onclick="toggleMobileMenu()" aria-label="Buka Menu Materi">
+    <svg id="menu-icon-bars" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+    <svg id="menu-icon-close" viewBox="0 0 24 24" style="display:none;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <nav class="seg-nav" id="seg-nav-menu" aria-label="Filter Materi Pembelajaran">
+    <button class="seg-btn active" onclick="setTopic('all', this)">Semua Materi</button>
     <button class="seg-btn" onclick="setTopic('A', this)"><span class="seg-code">A</span>Letak Geografis</button>
     <button class="seg-btn" onclick="setTopic('B', this)"><span class="seg-code">B</span>5 Pulau Besar</button>
     <button class="seg-btn" onclick="setTopic('C', this)"><span class="seg-code">C</span>Kenampakan Alam</button>
@@ -733,11 +799,28 @@ function clearChipSelection() {
   document.querySelectorAll('.isl-chip').forEach(c => c.classList.remove('selected'));
 }
 
+function toggleMobileMenu(forceClose) {
+  const nav = document.getElementById('seg-nav-menu');
+  const btn = document.getElementById('menu-toggle-btn');
+  const bars = document.getElementById('menu-icon-bars');
+  const close = document.getElementById('menu-icon-close');
+  const isOpen = forceClose === true ? false : !nav.classList.contains('show');
+  nav.classList.toggle('show', isOpen);
+  btn.classList.toggle('open', isOpen);
+  bars.style.display = isOpen ? 'none' : 'block';
+  close.style.display = isOpen ? 'block' : 'none';
+}
+
 function setTopic(topic, btnEl) {
   currentTopic = topic;
   clearChipSelection();
   document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
-  if (btnEl) btnEl.classList.add('active');
+  if (btnEl) {
+    btnEl.classList.add('active');
+    const lbl = document.getElementById('mobile-topic-label');
+    if (lbl) lbl.innerText = 'Mode: ' + btnEl.innerText.trim();
+  }
+  toggleMobileMenu(true);
 
   const aspect = window.innerWidth / Math.max(1, window.innerHeight);
   const scaleDist = aspect < 0.65 ? 1.55 : (aspect < 1.05 ? 1.25 : 1.0);
